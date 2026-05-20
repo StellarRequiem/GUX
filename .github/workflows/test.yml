@@ -1,0 +1,61 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Manual trigger from the Actions tab — useful when investigating
+  # without pushing a commit.
+  workflow_dispatch:
+
+# Cancel in-progress runs on the same branch when a new push arrives.
+# Avoids burning runner minutes on stale code.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} · py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install gux-governor + dev extras
+        # Editable install + dev extras (pytest, pytest-cov). The package
+        # itself is stdlib-only — no runtime deps to pull in.
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Show installed packages
+        # Sanity check — helps debug version drift if a test starts
+        # behaving differently between runs.
+        run: python -m pip list
+
+      - name: Run test suite (165 tests across 5 layers)
+        # Uses the testpaths + addopts already declared in pyproject.toml.
+        # The basetemp override there points at /tmp/gux-pytest-basetemp
+        # which exists on both ubuntu and macos runners.
+        run: python -m pytest
+
+      - name: Smoke-check the CLI
+        # Quick sanity that `gux --version` works post-install — catches
+        # entry-point misconfiguration that unit tests wouldn't see.
+        run: gux --version
