@@ -1,0 +1,23 @@
+G.UX — Governor User Experience
+Copyright 2026 Alex Price
+
+This product includes software developed by Alex Price.
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this software except in compliance with the License.
+A copy of the License is included in the LICENSE file in this
+distribution and is also available at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+────────────────────────────────────────────────────────────────────
+
+G.UX has no external runtime dependencies. The kernel and sidecar
+use only the Python standard library.
+
+Optional install extras pull in third-party packages under their own
+licenses:
+
+  pyyaml >= 6.0   (MIT License)     -- gux-governor[yaml]
+  pytest >= 7      (MIT License)     -- gux-governor[dev]
+  pytest-cov >= 4  (MIT License)     -- gux-governor[dev]

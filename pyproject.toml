@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gux-governor"
+version = "0.5.0"
+description = "G.UX — Governor User Experience. A drop-in governance kernel for LLM tool dispatch."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Alex Price", email = "alexanderprice91@yahoo.com" }]
+keywords = ["llm", "agent", "governance", "mcp", "tool-dispatch", "ai-safety", "audit"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Security",
+  "Topic :: System :: Monitoring",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+# Intentionally zero external runtime deps — stdlib-only kernel + sidecar.
+# `pip install gux-governor` works on a vanilla Python 3.10+ with nothing else.
+dependencies = []
+
+[project.optional-dependencies]
+# Optional YAML support for constitution files. The kernel falls back to
+# a minimal JSON-only loader if PyYAML isn't installed.
+yaml = ["pyyaml>=6.0"]
+# Future: dev tools
+dev = ["pytest>=7", "pytest-cov>=4"]
+
+[project.scripts]
+gux = "gux.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/StellarRequiem/gux"
+Repository = "https://github.com/StellarRequiem/gux"
+Issues = "https://github.com/StellarRequiem/gux/issues"
+Changelog = "https://github.com/StellarRequiem/gux/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gux = ["examples/*.yaml", "examples/*.jsonl"]
+
+# Tests live at top-level tests/, not under src/, so they're naturally
+# excluded from `setuptools.packages.find(where=["src"])` — the built
+# wheel contains only runtime code. Standard production-Python pattern.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --basetemp=/tmp/gux-pytest-basetemp"
