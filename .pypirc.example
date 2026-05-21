@@ -1,0 +1,26 @@
+# Template for ~/.pypirc — copy this file to ~/.pypirc, paste real
+# PyPI + TestPyPI API tokens, then `chmod 600 ~/.pypirc`.
+#
+# Token format: starts with `pypi-` for real PyPI, `pypi-` also for
+# TestPyPI (both use the same prefix). Paste the WHOLE token including
+# the `pypi-` prefix.
+#
+# DO NOT commit a real ~/.pypirc to any repo. This file is a template
+# only — `.pypirc.example` is in the repo as documentation; `~/.pypirc`
+# lives outside any repo.
+#
+# See RELEASING.md for the full one-time-setup flow.
+
+[distutils]
+index-servers =
+    pypi
+    testpypi
+
+[pypi]
+username = __token__
+password = <paste real PyPI API token here>
+
+[testpypi]
+repository = https://test.pypi.org/legacy/
+username = __token__
+password = <paste real TestPyPI API token here>

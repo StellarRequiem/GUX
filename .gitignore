@@ -35,3 +35,7 @@ ENV/
 # Runtime / user data (don't commit a real customer's license + audit)
 *.audit_chain.jsonl
 .gux/
+
+# PyPI credentials — keep ~/.pypirc out, AND defend against an
+# accidentally-misplaced copy in the repo root.
+.pypirc
