@@ -333,8 +333,15 @@ class TestSidecarE2E:
         )
         try:
             # Wait for the bind — poll healthz instead of fixed sleep.
+            # 5s was too tight on macOS GitHub runners (Python cold-start
+            # + pip-installed-entry-point spawn + bind can take 8-10s on
+            # a stressed runner — observed in CI run 487a1f5). 20s gives
+            # generous headroom on CI while still keeping the test
+            # responsive locally — a healthy bind completes in well under
+            # 1s, so we exit the loop early.
             base = f"http://127.0.0.1:{port}"
-            deadline = time.time() + 5
+            bind_timeout_s = 20
+            deadline = time.time() + bind_timeout_s
             ready = False
             while time.time() < deadline:
                 try:
@@ -344,7 +351,7 @@ class TestSidecarE2E:
                             break
                 except (error.URLError, ConnectionResetError):
                     time.sleep(0.1)
-            assert ready, "real sidecar didn't bind within 5s"
+            assert ready, f"real sidecar didn't bind within {bind_timeout_s}s"
 
             # POST a real dispatch.
             payload = json.dumps({
