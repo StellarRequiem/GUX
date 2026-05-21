@@ -339,11 +339,25 @@ class TestSidecarE2E:
             # generous headroom on CI while still keeping the test
             # responsive locally — a healthy bind completes in well under
             # 1s, so we exit the loop early.
+            #
+            # ALSO: detect early-exit of the subprocess + dump its
+            # stdout/stderr on any failure path. Without this the test
+            # just says "didn't bind" with no clue WHY — observed in CI
+            # run 43f42bc where the timeout bump alone wasn't enough,
+            # and we needed the subprocess output to diagnose.
             base = f"http://127.0.0.1:{port}"
             bind_timeout_s = 20
             deadline = time.time() + bind_timeout_s
             ready = False
             while time.time() < deadline:
+                # If the subprocess has exited, no point polling further.
+                if proc.poll() is not None:
+                    stdout, stderr = proc.communicate(timeout=1)
+                    raise AssertionError(
+                        f"sidecar exited early with code {proc.returncode}\n"
+                        f"  stdout: {stdout.decode(errors='replace')!r}\n"
+                        f"  stderr: {stderr.decode(errors='replace')!r}"
+                    )
                 try:
                     with request.urlopen(f"{base}/healthz", timeout=0.5) as resp:
                         if resp.status == 200:
@@ -351,7 +365,21 @@ class TestSidecarE2E:
                             break
                 except (error.URLError, ConnectionResetError):
                     time.sleep(0.1)
-            assert ready, f"real sidecar didn't bind within {bind_timeout_s}s"
+            if not ready:
+                # Bind never completed within the budget — capture subprocess
+                # output so the failure message tells us what's wrong.
+                proc.terminate()
+                try:
+                    stdout, stderr = proc.communicate(timeout=2)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    stdout, stderr = proc.communicate()
+                raise AssertionError(
+                    f"real sidecar didn't bind within {bind_timeout_s}s\n"
+                    f"  proc.poll(): {proc.poll()}\n"
+                    f"  stdout: {stdout.decode(errors='replace')!r}\n"
+                    f"  stderr: {stderr.decode(errors='replace')!r}"
+                )
 
             # POST a real dispatch.
             payload = json.dumps({
