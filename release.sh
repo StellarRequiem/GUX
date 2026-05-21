@@ -138,7 +138,17 @@ echo
 
 # ─── Step 6: TestPyPI upload + smoke install ──────────────────────
 echo "${BOLD}┌── Step 6 — TestPyPI upload + smoke install ───────────${RESET}"
-if [ "$DRY_RUN" = true ]; then
+# Auto-skip TestPyPI when the user hasn't registered + tokenized there.
+# Heuristic: if the [testpypi] password starts with "placeholder-", we
+# know it's not a real token. Avoids the trap where saying "y" to the
+# prompt triggers a 403 from TestPyPI and aborts the whole script
+# before the real PyPI step.
+TESTPYPI_PW=$(awk '/^\[testpypi\]/{f=1;next} /^\[/{f=0} f && /^password/{print $3; exit}' ~/.pypirc 2>/dev/null || echo "")
+if [[ "$TESTPYPI_PW" == placeholder-* ]] || [ -z "$TESTPYPI_PW" ]; then
+  warn "TestPyPI password is a placeholder — auto-skipping TestPyPI step"
+  warn "  (to enable: register on test.pypi.org, generate a token, put"
+  warn "   it in ~/.pypirc's [testpypi] password field)"
+elif [ "$DRY_RUN" = true ]; then
   warn "DRY RUN — skipping TestPyPI upload"
 else
   confirm "Upload to TestPyPI?"
