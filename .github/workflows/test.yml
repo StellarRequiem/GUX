@@ -37,12 +37,19 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
-      - name: Install gux-governor + dev extras
-        # Editable install + dev extras (pytest, pytest-cov). The package
-        # itself is stdlib-only — no runtime deps to pull in.
+      - name: Install gux-governor + dev + yaml extras
+        # Editable install + dev extras (pytest, pytest-cov) + yaml extra
+        # (PyYAML).
+        #
+        # The kernel itself is stdlib-only — pyyaml is OPTIONAL for users
+        # who pass JSON constitutions instead. But the full test suite
+        # exercises the recommended `gux init` flow which writes a YAML
+        # constitution, so [yaml] is required for the suite to run.
+        # CI installs both extras to validate the recommended user path
+        # end-to-end; package distribution remains zero-runtime-dep.
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[dev]'
+          python -m pip install -e '.[dev,yaml]'
 
       - name: Show installed packages
         # Sanity check — helps debug version drift if a test starts
